@@ -1,29 +1,29 @@
-package com.example.calculator.tools
+package com.example.calculator.tools;
 
-import android.content.Context
-import android.hardware.camera2.CameraAccessException
-import android.hardware.camera2.CameraManager
+import android.content.Context;
+import android.hardware.camera2.CameraAccessException;
+import android.hardware.camera2.CameraManager;
 
-class FlashlightTool {
-    private var cameraManager: CameraManager? = null
+public class FlashlightTool {
+    private CameraManager cameraManager;
 
-    fun attachContext(context: Context) {
-        cameraManager = context.getSystemService(Context.CAMERA_SERVICE) as CameraManager
+    public void attachContext(Context context) {
+        cameraManager = (CameraManager) context.getSystemService(Context.CAMERA_SERVICE);
     }
 
-    fun toggle(state: String): Boolean {
+    public boolean toggle(String state) {
         try {
-            val cm = cameraManager ?: return false
+            if (cameraManager == null) return false;
             if ("on".equalsIgnoreCase(state)) {
-                cm.setTorchMode("0", true)
-                return true
+                cameraManager.setTorchMode("0", true);
+                return true;
             } else if ("off".equalsIgnoreCase(state)) {
-                cm.setTorchMode("0", false)
-                return true
+                cameraManager.setTorchMode("0", false);
+                return true;
             }
-            return false
-        } catch (e: CameraAccessException) {
-            return false
+            return false;
+        } catch (CameraAccessException e) {
+            return false;
         }
     }
 }

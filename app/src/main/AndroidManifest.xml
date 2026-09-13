@@ -8,7 +8,7 @@
         android:allowBackup="true"
         android:label="AI Assistant"
         android:supportsRtl="true"
-        android:theme="@style/Theme.AppCompat.Light.DarkActionBar">
+        android:theme="@style/Theme.Calculator">
         <activity
             android:name=".MainActivity"
             android:exported="true">
@@ -17,6 +17,10 @@
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
         </activity>
+        <activity
+            android:name=".SettingsActivity"
+            android:exported="false"
+            android:parentActivityName=".MainActivity" />
     </application>
 
 </manifest>

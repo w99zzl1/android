@@ -52,8 +52,10 @@ fun ChatScreen(state: AppState) {
             verticalArrangement = Arrangement.spacedBy(8.dp),
             contentPadding = PaddingValues(vertical = 8.dp)
         ) {
-            items(state.messages) { msg ->
-                MessageBubble(message = msg)
+            state.messages.forEachIndexed { index, msg ->
+                item {
+                    MessageBubble(message = msg)
+                }
             }
             if (state.isLoading.value) {
                 item {

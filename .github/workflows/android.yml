@@ -33,6 +33,9 @@ jobs:
           validate-wrappers: false
           gradle-version: '8.4'
 
+      - name: Generate Gradle Wrapper
+        run: gradle wrapper --gradle-version 8.4
+
       - name: Build Debug APK
         run: ./gradlew assembleDebug
 

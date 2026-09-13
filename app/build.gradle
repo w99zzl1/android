@@ -1,9 +1,11 @@
 plugins {
     id 'com.android.application'
 }
+
 android {
     namespace 'com.example.calculator'
     compileSdk 34
+
     defaultConfig {
         applicationId "com.example.calculator"
         minSdk 24
@@ -11,4 +13,9 @@ android {
         versionCode 1
         versionName "1.0"
     }
+}
+
+dependencies {
+    // Эта библиотека обязательна, чтобы приложение запускалось на любом телефоне
+    implementation 'androidx.appcompat:appcompat:1.6.1'
 }

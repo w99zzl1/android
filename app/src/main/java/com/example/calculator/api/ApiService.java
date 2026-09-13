@@ -2,7 +2,7 @@ package com.example.calculator.api;
 
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
-import com.google.gson.JsonElement;
+import com.google.gson.JsonObject;
 import retrofit2.Retrofit;
 import retrofit2.converter.gson.GsonConverterFactory;
 import retrofit2.http.Body;
@@ -24,7 +24,7 @@ public class ApiService {
         );
 
         @POST(MODEL_NAME)
-        retrofit2.Call<JsonElement> generateContentRaw(
+        retrofit2.Call<String> generateContentRaw(
             @Query("key") String apiKey,
             @Body String request
         );
@@ -42,7 +42,7 @@ public class ApiService {
         return geminiApi.generateContent(apiKey, request).execute().body();
     }
 
-    public JsonElement callGeminiRaw(String apiKey, String request) throws Exception {
+    public String callGeminiRaw(String apiKey, String request) throws Exception {
         return geminiApi.generateContentRaw(apiKey, request).execute().body();
     }
 }

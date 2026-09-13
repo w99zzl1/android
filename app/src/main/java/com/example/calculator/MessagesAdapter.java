@@ -21,7 +21,7 @@ import androidx.core.content.ContextCompat;
 import androidx.recyclerview.widget.RecyclerView;
 
 import com.google.android.material.card.MaterialCardView;
-import com.google.android.material.button.MaterialButton;
+import android.widget.ImageButton;
 
 import java.util.List;
 
@@ -55,7 +55,7 @@ public class MessagesAdapter extends RecyclerView.Adapter<MessagesAdapter.Messag
     class MessageViewHolder extends RecyclerView.ViewHolder {
         MaterialCardView cardView;
         TextView messageText;
-        MaterialButton copyButton;
+        ImageButton copyButton;
         View senderIndicator;
 
         public MessageViewHolder(@NonNull View itemView) {

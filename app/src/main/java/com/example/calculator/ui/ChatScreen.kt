@@ -7,6 +7,7 @@ import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.*
+import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -20,6 +21,7 @@ import androidx.compose.ui.unit.sp
 import com.example.calculator.AppState
 import com.example.calculator.ChatMessage
 
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun ChatScreen(state: AppState) {
     Column(

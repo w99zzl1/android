@@ -12,6 +12,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
@@ -123,7 +124,7 @@ fun ChatScreen(state: AppState) {
 @Composable
 private fun MessageBubble(message: ChatMessage) {
     val backgroundColor = if (message.sender == "user") Color(0xFF6200EE) else Color(0xFF2A2A4A)
-    val alignment = if (message.sender == "user") Alignment.End else Alignment.Start
+    val alignment = if (message.sender == "user") Alignment.CenterEnd else Alignment.CenterStart
 
     Box(
         modifier = Modifier.fillMaxWidth(),

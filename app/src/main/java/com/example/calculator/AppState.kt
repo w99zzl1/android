@@ -3,9 +3,11 @@ package com.example.calculator
 import androidx.compose.runtime.MutableState
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.mutableStateListOf
+import com.example.calculator.api.GeminiManager
+import com.example.calculator.tools.FlashlightTool
 import kotlinx.coroutines.Job
 
-data class AppState {
+class AppState {
     val messages: MutableList<ChatMessage> = mutableStateListOf()
     val inputText: MutableState<String> = mutableStateOf("")
     val isLoading: MutableState<Boolean> = mutableStateOf(false)
@@ -36,7 +38,7 @@ data class AppState {
 
                 val response = geminiManager.processMessage(text, tools)
 
-                if (response.startsWith("FUNCTION_CALL:")) {
+                if (response != null && response.startsWith("FUNCTION_CALL:")) {
                     val parts = response.substring("FUNCTION_CALL:".length).split("\\|".toRegex(), 2)
                     val funcName = parts[0]
                     val argsJson = if (parts.size > 1) parts[1] else "{}"
@@ -69,7 +71,7 @@ data class AppState {
                 val state = args.get("state").asString
                 val success = flashlightTool.toggle(state)
                 if (success) {
-                    flashlightOn.value = "on".equalsIgnoreCase(state)
+                    flashlightOn.value = "on".equals(state, ignoreCase = true)
                     return "Flashlight turned $state"
                 }
                 return "Failed to toggle flashlight"

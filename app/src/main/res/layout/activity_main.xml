@@ -7,7 +7,6 @@
     android:background="#121212"
     android:padding="16dp">
 
-    <!-- Экран вывода цифр -->
     <TextView
         android:id="@+id/result"
         android:layout_width="match_parent"
@@ -20,12 +19,10 @@
         android:padding="16dp"
         android:maxLines="2"/>
 
-    <!-- Сетка кнопок на основе таблицы -->
     <TableLayout
         android:layout_width="wrap_content"
         android:layout_height="wrap_content">
 
-        <!-- Ряд 1: C, (, ), ÷ -->
         <TableRow android:layout_marginBottom="8dp">
             <Button android:id="@+id/btn_c" android:text="C" android:backgroundTint="#EF5350" android:textColor="#FFFFFF" android:layout_margin="4dp" android:width="70dp" android:height="70dp" android:textSize="20sp"/>
             <Button android:id="@+id/btn_open" android:text="(" android:backgroundTint="#37474F" android:textColor="#FFFFFF" android:layout_margin="4dp" android:width="70dp" android:height="70dp" android:textSize="20sp"/>
@@ -33,7 +30,6 @@
             <Button android:id="@+id/btn_div" android:text="÷" android:backgroundTint="#FF9800" android:textColor="#FFFFFF" android:layout_margin="4dp" android:width="70dp" android:height="70dp" android:textSize="24sp"/>
         </TableRow>
 
-        <!-- Ряд 2: 7, 8, 9, × -->
         <TableRow android:layout_marginBottom="8dp">
             <Button android:id="@+id/btn_7" android:text="7" android:backgroundTint="#263238" android:textColor="#FFFFFF" android:layout_margin="4dp" android:width="70dp" android:height="70dp" android:textSize="20sp"/>
             <Button android:id="@+id/btn_8" android:text="8" android:backgroundTint="#263238" android:textColor="#FFFFFF" android:layout_margin="4dp" android:width="70dp" android:height="70dp" android:textSize="20sp"/>
@@ -41,7 +37,6 @@
             <Button android:id="@+id/btn_mult" android:text="×" android:backgroundTint="#FF9800" android:textColor="#FFFFFF" android:layout_margin="4dp" android:width="70dp" android:height="70dp" android:textSize="24sp"/>
         </TableRow>
 
-        <!-- Ряд 3: 4, 5, 6, - -->
         <TableRow android:layout_marginBottom="8dp">
             <Button android:id="@+id/btn_4" android:text="4" android:backgroundTint="#263238" android:textColor="#FFFFFF" android:layout_margin="4dp" android:width="70dp" android:height="70dp" android:textSize="20sp"/>
             <Button android:id="@+id/btn_5" android:text="5" android:backgroundTint="#263238" android:textColor="#FFFFFF" android:layout_margin="4dp" android:width="70dp" android:height="70dp" android:textSize="20sp"/>
@@ -49,7 +44,6 @@
             <Button android:id="@+id/btn_sub" android:text="-" android:backgroundTint="#FF9800" android:textColor="#FFFFFF" android:layout_margin="4dp" android:width="70dp" android:height="70dp" android:textSize="24sp"/>
         </TableRow>
 
-        <!-- Ряд 4: 1, 2, 3, + -->
         <TableRow android:layout_marginBottom="8dp">
             <Button android:id="@+id/btn_1" android:text="1" android:backgroundTint="#263238" android:textColor="#FFFFFF" android:layout_margin="4dp" android:width="70dp" android:height="70dp" android:textSize="20sp"/>
             <Button android:id="@+id/btn_2" android:text="2" android:backgroundTint="#263238" android:textColor="#FFFFFF" android:layout_margin="4dp" android:width="70dp" android:height="70dp" android:textSize="20sp"/>
@@ -57,13 +51,10 @@
             <Button android:id="@+id/btn_add" android:text="+" android:backgroundTint="#FF9800" android:textColor="#FFFFFF" android:layout_margin="4dp" android:width="70dp" android:height="70dp" android:textSize="24sp"/>
         </TableRow>
 
-        <!-- Ряд 5: 0, ., = -->
         <TableRow>
-            <!-- Чтобы кнопка '0' занимала два столбца, используем layout_span -->
             <Button android:id="@+id/btn_0" android:text="0" android:backgroundTint="#263238" android:textColor="#FFFFFF" android:layout_margin="4dp" android:layout_span="2" android:height="70dp" android:textSize="20sp"/>
             <Button android:id="@+id/btn_dot" android:text="." android:backgroundTint="#263238" android:textColor="#FFFFFF" android:layout_margin="4dp" android:width="70dp" android:height="70dp" android:textSize="20sp"/>
             <Button android:id="@+id/btn_equal" android:text="=" android:backgroundTint="#FF9800" android:textColor="#FFFFFF" android:layout_margin="4dp" android:width="70dp" android:height="70dp" android:textSize="24sp"/>
         </TableRow>
-
     </TableLayout>
 </LinearLayout>

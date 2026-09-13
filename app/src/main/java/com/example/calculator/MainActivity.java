@@ -22,7 +22,7 @@ import java.util.Map;
 public class MainActivity extends AppCompatActivity {
     private static final String TAG = "MainActivity";
     private final GeminiManager geminiManager = new GeminiManager();
-    private final FlashlightTool flashlightTool;
+    private FlashlightTool flashlightTool;
     private LinearLayout messagesContainer;
     private EditText inputField;
     private ScrollView scrollView;

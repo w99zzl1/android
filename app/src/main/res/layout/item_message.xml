@@ -11,7 +11,6 @@
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:layout_marginHorizontal="8dp"
-        android:layout_marginVertical="4dp"
         android:maxWidth="320dp"
         app:cardCornerRadius="16dp"
         app:cardElevation="2dp"
@@ -19,49 +18,39 @@
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toTopOf="parent">
 
-        <androidx.constraintlayout.widget.ConstraintLayout
-            android:layout_width="match_parent"
+        <LinearLayout
+            android:layout_width="wrap_content"
             android:layout_height="wrap_content"
+            android:gravity="center_vertical"
+            android:orientation="horizontal"
             android:padding="12dp">
 
             <View
                 android:id="@+id/senderIndicator"
                 android:layout_width="4dp"
-                android:layout_height="0dp"
-                android:background="@color/primary"
-                app:layout_constraintBottom_toBottomOf="parent"
-                app:layout_constraintStart_toStartOf="parent"
-                app:layout_constraintTop_toTopOf="parent" />
+                android:layout_height="match_parent"
+                android:layout_marginEnd="10dp"
+                android:background="@color/primary" />
 
             <TextView
                 android:id="@+id/messageText"
-                android:layout_width="0dp"
+                android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:layout_marginStart="12dp"
-                android:layout_marginEnd="12dp"
-                android:layout_marginVertical="4dp"
+                android:layout_marginEnd="8dp"
                 android:autoLink="web|email|phone|map"
                 android:linksClickable="true"
                 android:textColor="@android:color/white"
-                android:textSize="15sp"
-                app:layout_constraintEnd_toStartOf="@+id/copyButton"
-                app:layout_constraintStart_toEndOf="@+id/senderIndicator"
-                app:layout_constraintTop_toTopOf="parent" />
+                android:textSize="15sp" />
 
             <ImageButton
                 android:id="@+id/copyButton"
                 android:layout_width="32dp"
                 android:layout_height="32dp"
-                android:layout_marginEnd="4dp"
                 android:background="@android:color/transparent"
                 android:contentDescription="Copy"
                 android:padding="4dp"
                 android:scaleType="fitCenter"
-                android:src="@drawable/ic_copy"
-                app:layout_constraintBottom_toBottomOf="parent"
-                app:layout_constraintEnd_toEndOf="parent"
-                app:layout_constraintTop_toTopOf="parent" />
-
-        </androidx.constraintlayout.widget.ConstraintLayout>
+                android:src="@drawable/ic_copy" />
+        </LinearLayout>
     </com.google.android.material.card.MaterialCardView>
 </androidx.constraintlayout.widget.ConstraintLayout>

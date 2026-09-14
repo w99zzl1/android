@@ -89,36 +89,32 @@ public class ApiService {
         JsonObject partObj = new JsonObject();
         partObj.addProperty("text", "You are a helpful AI assistant with access to tools. " +
             "When the user asks you to do something that requires a tool, " +
-            "call the appropriate tool. " +
-            "Available tools: flashlight toggle." +
-            "\n\nUser: " + userMessage);
+            "call the appropriate tool with the correct arguments and do not guess extra fields. " +
+            "After the tool result is provided, answer to the user naturally.\n\nUser: " + userMessage);
         parts.add(partObj);
         contentObj.add("parts", parts);
         contents.add(contentObj);
 
-        JsonArray toolsArray = new JsonArray();
-        JsonObject toolObj = new JsonObject();
         JsonArray funcDecls = new JsonArray();
-        
-        JsonObject funcDecl = new JsonObject();
-        funcDecl.addProperty("name", "FLASHLIGHT_TOGGLE");
-        funcDecl.addProperty("description", "Turns the flashlight on or off. State must be 'on' or 'off'.");
-        
-        JsonObject params = new JsonObject();
-        params.addProperty("type", "OBJECT");
-        JsonObject properties = new JsonObject();
-        JsonObject stateProp = new JsonObject();
-        stateProp.addProperty("type", "STRING");
-        stateProp.addProperty("description", "Must be 'on' or 'off'");
-        properties.add("state", stateProp);
-        params.add("properties", properties);
-        JsonArray required = new JsonArray();
-        required.add("state");
-        params.add("required", required);
-        
-        funcDecl.add("parameters", params);
-        funcDecls.add(funcDecl);
+        if (tools != null) {
+            for (Map<String, Object> tool : tools) {
+                if (tool == null) continue;
+                JsonObject decl = new JsonObject();
+                Object name = tool.get("name");
+                if (name != null) decl.addProperty("name", String.valueOf(name));
+                Object description = tool.get("description");
+                if (description != null) decl.addProperty("description", String.valueOf(description));
+                Object params = tool.get("parameters");
+                if (params instanceof Map) {
+                    decl.add("parameters", gson.toJsonTree(params));
+                }
+                funcDecls.add(decl);
+            }
+        }
+
+        JsonObject toolObj = new JsonObject();
         toolObj.add("functionDeclarations", funcDecls);
+        JsonArray toolsArray = new JsonArray();
         toolsArray.add(toolObj);
 
         request.add("contents", contents);

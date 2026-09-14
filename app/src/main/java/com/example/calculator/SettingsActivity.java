@@ -92,6 +92,18 @@ public class SettingsActivity extends AppCompatActivity {
         saveButton.setOnClickListener(v -> saveSettings());
         fetchModelsButton.setOnClickListener(v -> fetchModels());
 
+        Button allowBrightnessButton = findViewById(R.id.allowBrightnessButton);
+        allowBrightnessButton.setAllCaps(false);
+        allowBrightnessButton.setOnClickListener(v -> {
+            if (android.provider.Settings.System.canWrite(this)) {
+                Toast.makeText(this, "Brightness control is already allowed", Toast.LENGTH_SHORT).show();
+            } else {
+                Intent intent = new Intent(android.provider.Settings.ACTION_MANAGE_WRITE_SETTINGS,
+                    android.net.Uri.parse("package:" + getPackageName()));
+                startActivity(intent);
+            }
+        });
+
         apiKeyInput.setText(settingsManager.getApiKey());
         flashlightSwitch.setOnCheckedChangeListener((buttonView, isChecked) -> {
             if (!flashlightTool.toggle(isChecked ? "on" : "off")) {

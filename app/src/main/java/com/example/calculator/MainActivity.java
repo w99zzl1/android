@@ -51,24 +51,67 @@ public class MainActivity extends AppCompatActivity {
     private GeminiManager geminiManager;
     private final FlashlightTool flashlightTool = new FlashlightTool();
     private SettingsManager settingsManager;
+    private DeviceTools deviceTools;
     private boolean isReady = false;
 
+    private static Map<String, Object> tool(String name, String description, Object... props) {
+        Map<String, Object> parameters = new HashMap<>();
+        parameters.put("type", "OBJECT");
+        Map<String, Object> properties = new HashMap<>();
+        Map<String, Object> required = new HashMap<>();
+        for (int i = 0; i + 1 < props.length; i += 2) {
+            String key = String.valueOf(props[i]);
+            Map<String, Object> prop = (Map<String, Object>) props[i + 1];
+            properties.put(key, prop);
+            if (Boolean.TRUE.equals(prop.get("__required"))) {
+                required.put(key, null);
+            }
+            prop.remove("__required");
+        }
+        if (!required.isEmpty()) {
+            parameters.put("required", required.keySet());
+        }
+        parameters.put("properties", properties);
+        Map<String, Object> tool = new HashMap<>();
+        tool.put("name", name);
+        tool.put("description", description);
+        tool.put("parameters", parameters);
+        return tool;
+    }
+
     private final List<Map<String, Object>> tools = Arrays.asList(
-        new HashMap<String, Object>() {{
-            put("name", "FLASHLIGHT_TOGGLE");
-            put("description", "Turns the flashlight on or off. State must be 'on' or 'off'.");
-            Map<String, Object> params = new HashMap<>();
-            params.put("type", "OBJECT");
-            Map<String, Object> properties = new HashMap<>();
-            Map<String, Object> stateProp = new HashMap<>();
-            stateProp.put("type", "STRING");
-            stateProp.put("description", "Must be 'on' or 'off'");
-            properties.put("state", stateProp);
-            params.put("properties", properties);
-            params.put("required", Arrays.asList("state"));
-            put("parameters", params);
-        }}
+        tool("FLASHLIGHT_TOGGLE", "Turns the flashlight on or off. State must be 'on' or 'off'.",
+            "state", stringProp("Must be 'on' or 'off'", true)),
+        tool("OPEN_APP_URL", "Opens a website in the browser, or an installed app. For apps use 'app:<package name>' (e.g. 'app:com.whatsapp'), otherwise pass a URL or domain name.",
+            "target", stringProp("URL, domain, or app:<package>", true)),
+        tool("SET_ALARM_TIMER", "Sets an alarm at a given time, or a timer for a given number of seconds. type is 'alarm' (use hour/minute) or 'timer' (use seconds).",
+            "type", stringProp("'alarm' or 'timer'", true),
+            "hour", intProp("Hour for alarm, 0-23", false),
+            "minute", intProp("Minute for alarm, 0-59", false),
+            "seconds", intProp("Duration in seconds for timer, 1-86400", false),
+            "label", stringProp("Optional label/message", false)),
+        tool("SET_VOLUME", "Changes the volume of a stream. stream is one of: media, ring, alarm, notification, call. volume is 0-100 percent.",
+            "stream", stringProp("media, ring, alarm, notification, or call", true),
+            "volume", intProp("Volume 0-100 percent", true)),
+        tool("SET_BRIGHTNESS", "Sets the screen brightness to a percentage (0-100).",
+            "percent", intProp("Brightness 0-100 percent", true))
     );
+
+    private static Map<String, Object> stringProp(String description, boolean required) {
+        Map<String, Object> m = new HashMap<>();
+        m.put("type", "STRING");
+        m.put("description", description);
+        if (required) m.put("__required", true);
+        return m;
+    }
+
+    private static Map<String, Object> intProp(String description, boolean required) {
+        Map<String, Object> m = new HashMap<>();
+        m.put("type", "INTEGER");
+        m.put("description", description);
+        if (required) m.put("__required", true);
+        return m;
+    }
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -77,10 +120,11 @@ public class MainActivity extends AppCompatActivity {
         try {
             settingsManager = new SettingsManager(this);
             geminiManager = new GeminiManager(this);
+            deviceTools = new DeviceTools(this);
             initViews();
             setupRecyclerView();
             setupSendButton();
-            addMessage(new Message("assistant", "Hello! I'm your AI assistant. I can help you with various tasks including controlling your flashlight. How can I help you today?", false));
+            addMessage(new Message("assistant", "Hello! I'm your AI assistant. I can control your phone: flashlight, screen brightness, volume, open apps/web pages, set alarms and timers. What can I do for you?", false));
             isReady = true;
         } catch (Exception e) {
             Log.e(TAG, "Error initializing MainActivity", e);
@@ -195,21 +239,34 @@ public class MainActivity extends AppCompatActivity {
     }
 
     private String executeTool(String funcName, String argsJson) {
-        if ("FLASHLIGHT_TOGGLE".equals(funcName)) {
-            try {
-                com.google.gson.JsonObject args = com.google.gson.JsonParser.parseString(argsJson).getAsJsonObject();
-                String state = args.get("state").getAsString();
-                boolean success = flashlightTool.toggle(state);
-                if (success) {
-                    return "Flashlight turned " + state;
-                } else {
-                    return "Failed to toggle flashlight";
-                }
-            } catch (Exception e) {
-                return "Error: " + e.getMessage();
-            }
+        com.google.gson.JsonObject args;
+        try {
+            args = com.google.gson.JsonParser.parseString(argsJson).getAsJsonObject();
+        } catch (Exception e) {
+            return "Invalid tool arguments: " + e.getMessage();
         }
-        return "Unknown tool: " + funcName;
+
+        try {
+            switch (funcName) {
+                case "FLASHLIGHT_TOGGLE": {
+                    String state = args.has("state") ? args.get("state").getAsString() : "";
+                    boolean success = flashlightTool.toggle(state);
+                    return success ? "Flashlight turned " + state : "Failed to toggle flashlight";
+                }
+                case "OPEN_APP_URL":
+                    return deviceTools.openAppUrl(args);
+                case "SET_ALARM_TIMER":
+                    return deviceTools.setAlarmTimer(args);
+                case "SET_VOLUME":
+                    return deviceTools.setVolume(args);
+                case "SET_BRIGHTNESS":
+                    return deviceTools.setBrightness(args);
+                default:
+                    return "Unknown tool: " + funcName;
+            }
+        } catch (Exception e) {
+            return "Tool error: " + e.getMessage();
+        }
     }
 
     private void addMessage(Message message) {

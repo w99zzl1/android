@@ -1,6 +1,6 @@
 package com.example.calculator;
 
-import android.app.AlarmClock;
+import android.provider.AlarmClock;
 import android.content.Context;
 import android.content.Intent;
 import android.media.AudioManager;

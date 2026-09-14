@@ -77,13 +77,17 @@ public class MessagesAdapter extends RecyclerView.Adapter<MessagesAdapter.Messag
             if (message.isUser) {
                 cardView.setCardBackgroundColor(cardView.getContext().getColor(com.example.calculator.R.color.primary));
                 senderIndicator.setBackgroundColor(ContextCompat.getColor(cardView.getContext(), com.example.calculator.R.color.primary));
-                // Align to end
-                cardView.setLayoutDirection(View.LAYOUT_DIRECTION_RTL);
             } else {
                 cardView.setCardBackgroundColor(cardView.getContext().getColor(com.example.calculator.R.color.surface));
                 senderIndicator.setBackgroundColor(ContextCompat.getColor(cardView.getContext(), com.example.calculator.R.color.primary));
-                // Align to start
-                cardView.setLayoutDirection(View.LAYOUT_DIRECTION_LTR);
+            }
+            // Align bubbles: user to the end (right), assistant to the start (left)
+            android.view.ViewGroup.LayoutParams lp = cardView.getLayoutParams();
+            if (lp instanceof androidx.constraintlayout.widget.ConstraintLayout.LayoutParams) {
+                androidx.constraintlayout.widget.ConstraintLayout.LayoutParams params =
+                    (androidx.constraintlayout.widget.ConstraintLayout.LayoutParams) lp;
+                params.horizontalBias = message.isUser ? 1.0f : 0.0f;
+                cardView.setLayoutParams(params);
             }
 
             // Copy button

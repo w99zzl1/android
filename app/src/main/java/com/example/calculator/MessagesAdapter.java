@@ -20,7 +20,7 @@ import androidx.annotation.NonNull;
 import androidx.core.content.ContextCompat;
 import androidx.recyclerview.widget.RecyclerView;
 
-import com.example.calculator.R;
+
 import com.google.android.material.card.MaterialCardView;
 import android.widget.ImageButton;
 
@@ -75,15 +75,15 @@ public class MessagesAdapter extends RecyclerView.Adapter<MessagesAdapter.Messag
 
             // Style based on sender
             if (message.isUser) {
-                cardView.setCardBackgroundColor(cardView.getContext().getColor(R.color.primary));
-                senderIndicator.setBackgroundColor(ContextCompat.getColor(cardView.getContext(), R.color.primary));
+                cardView.setCardBackgroundColor(cardView.getContext().getColor(com.example.calculator.R.color.primary));
+                senderIndicator.setBackgroundColor(ContextCompat.getColor(cardView.getContext(), com.example.calculator.R.color.primary));
                 // Align to end
                 ViewGroup.MarginLayoutParams params = (ViewGroup.MarginLayoutParams) cardView.getLayoutParams();
                 params.gravity = android.view.Gravity.END;
                 cardView.setLayoutParams(params);
             } else {
-                cardView.setCardBackgroundColor(cardView.getContext().getColor(R.color.surface));
-                senderIndicator.setBackgroundColor(ContextCompat.getColor(cardView.getContext(), R.color.primary));
+                cardView.setCardBackgroundColor(cardView.getContext().getColor(com.example.calculator.R.color.surface));
+                senderIndicator.setBackgroundColor(ContextCompat.getColor(cardView.getContext(), com.example.calculator.R.color.primary));
                 // Align to start
                 ViewGroup.MarginLayoutParams params = (ViewGroup.MarginLayoutParams) cardView.getLayoutParams();
                 params.gravity = android.view.Gravity.START;

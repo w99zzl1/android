@@ -74,15 +74,15 @@ public class MessagesAdapter extends RecyclerView.Adapter<MessagesAdapter.Messag
 
             // Style based on sender
             if (message.isUser) {
-                cardView.setCardBackgroundColor(cardView.getContext().getColor(com.google.android.material.R.color.material_blue_700));
-                senderIndicator.setBackgroundColor(ContextCompat.getColor(cardView.getContext(), com.google.android.material.R.color.material_blue_700));
+                cardView.setCardBackgroundColor(cardView.getContext().getColor(R.color.primary));
+                senderIndicator.setBackgroundColor(ContextCompat.getColor(cardView.getContext(), R.color.primary));
                 // Align to end
                 ViewGroup.MarginLayoutParams params = (ViewGroup.MarginLayoutParams) cardView.getLayoutParams();
                 params.gravity = android.view.Gravity.END;
                 cardView.setLayoutParams(params);
             } else {
-                cardView.setCardBackgroundColor(cardView.getContext().getColor(com.google.android.material.R.color.material_grey_800));
-                senderIndicator.setBackgroundColor(ContextCompat.getColor(cardView.getContext(), com.google.android.material.R.color.material_blue_500));
+                cardView.setCardBackgroundColor(cardView.getContext().getColor(R.color.surface));
+                senderIndicator.setBackgroundColor(ContextCompat.getColor(cardView.getContext(), R.color.primary));
                 // Align to start
                 ViewGroup.MarginLayoutParams params = (ViewGroup.MarginLayoutParams) cardView.getLayoutParams();
                 params.gravity = android.view.Gravity.START;

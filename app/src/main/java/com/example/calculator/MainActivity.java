@@ -52,11 +52,6 @@ public class MainActivity extends AppCompatActivity {
     private final FlashlightTool flashlightTool = new FlashlightTool();
     private final SettingsManager settingsManager;
 
-    public MainActivity() {
-        settingsManager = new SettingsManager(this);
-        geminiManager = new GeminiManager(this);
-    }
-
     private final List<Map<String, Object>> tools = Arrays.asList(
         new HashMap<String, Object>() {{
             put("name", "FLASHLIGHT_TOGGLE");
@@ -76,6 +71,7 @@ public class MainActivity extends AppCompatActivity {
 
     public MainActivity() {
         settingsManager = new SettingsManager(this);
+        geminiManager = new GeminiManager(this);
     }
 
     @Override

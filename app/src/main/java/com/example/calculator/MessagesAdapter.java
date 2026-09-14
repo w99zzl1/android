@@ -11,7 +11,6 @@ import android.view.LayoutInflater;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
-import android.view.ViewGroup;
 import android.widget.PopupMenu;
 import android.widget.TextView;
 import android.widget.Toast;
@@ -78,16 +77,12 @@ public class MessagesAdapter extends RecyclerView.Adapter<MessagesAdapter.Messag
                 cardView.setCardBackgroundColor(cardView.getContext().getColor(com.example.calculator.R.color.primary));
                 senderIndicator.setBackgroundColor(ContextCompat.getColor(cardView.getContext(), com.example.calculator.R.color.primary));
                 // Align to end
-                ViewGroup.MarginLayoutParams params = (ViewGroup.MarginLayoutParams) cardView.getLayoutParams();
-                params.gravity = android.view.Gravity.END;
-                cardView.setLayoutParams(params);
+                cardView.setLayoutDirection(View.LAYOUT_DIRECTION_RTL);
             } else {
                 cardView.setCardBackgroundColor(cardView.getContext().getColor(com.example.calculator.R.color.surface));
                 senderIndicator.setBackgroundColor(ContextCompat.getColor(cardView.getContext(), com.example.calculator.R.color.primary));
                 // Align to start
-                ViewGroup.MarginLayoutParams params = (ViewGroup.MarginLayoutParams) cardView.getLayoutParams();
-                params.gravity = android.view.Gravity.START;
-                cardView.setLayoutParams(params);
+                cardView.setLayoutDirection(View.LAYOUT_DIRECTION_LTR);
             }
 
             // Copy button

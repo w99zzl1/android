@@ -55,19 +55,23 @@ public class SettingsActivity extends AppCompatActivity {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_settings);
 
-        settingsManager = new SettingsManager(this);
-        flashlightTool = new FlashlightTool();
-        flashlightTool.attachContext(this);
+        try {
+            settingsManager = new SettingsManager(this);
+            flashlightTool = new FlashlightTool();
+            flashlightTool.attachContext(this);
 
-        Toolbar toolbar = findViewById(R.id.toolbar);
-        setSupportActionBar(toolbar);
-        if (getSupportActionBar() != null) {
-            getSupportActionBar().setDisplayHomeAsUpEnabled(true);
-            getSupportActionBar().setTitle("Settings");
+            Toolbar toolbar = findViewById(R.id.toolbar);
+            setSupportActionBar(toolbar);
+            if (getSupportActionBar() != null) {
+                getSupportActionBar().setDisplayHomeAsUpEnabled(true);
+                getSupportActionBar().setTitle("Settings");
+            }
+
+            initViews();
+            loadCurrentSettings();
+        } catch (Exception e) {
+            UiUtils.handleError(findViewById(android.R.id.content), this, "Settings error", e);
         }
-
-        initViews();
-        loadCurrentSettings();
     }
 
     private void initViews() {
@@ -90,7 +94,9 @@ public class SettingsActivity extends AppCompatActivity {
 
         apiKeyInput.setText(settingsManager.getApiKey());
         flashlightSwitch.setOnCheckedChangeListener((buttonView, isChecked) -> {
-            flashlightTool.toggle(isChecked ? "on" : "off");
+            if (!flashlightTool.toggle(isChecked ? "on" : "off")) {
+                showError("Could not control the flashlight (permission or device issue)");
+            }
         });
     }
 
@@ -192,11 +198,9 @@ public class SettingsActivity extends AppCompatActivity {
     }
 
     private void showError(String message) {
-        new MaterialAlertDialogBuilder(this)
-            .setTitle("Error")
-            .setMessage(message)
-            .setPositiveButton("OK", null)
-            .show();
+        String detail = UiUtils.buildErrorMessage("Error", new RuntimeException(message));
+        UiUtils.copyToClipboard(this, "App error", detail);
+        UiUtils.showSnackbar(findViewById(android.R.id.content), message);
     }
 
     @Override

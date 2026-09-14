@@ -1,7 +1,6 @@
 package com.example.calculator;
 
 import android.content.Context;
-import android.hardware.camera2.CameraAccessException;
 import android.hardware.camera2.CameraManager;
 import android.util.Log;
 
@@ -24,7 +23,8 @@ public class FlashlightTool {
                 return true;
             }
             return false;
-        } catch (CameraAccessException e) {
+        } catch (Exception e) {
+            Log.e(TAG, "Failed to toggle flashlight", e);
             return false;
         }
     }

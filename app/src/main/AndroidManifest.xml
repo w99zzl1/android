@@ -2,9 +2,11 @@
 <manifest xmlns:android="http://schemas.android.com/apk/res/android">
 
     <uses-permission android:name="android.permission.INTERNET" />
+    <uses-permission android:name="android.permission.CAMERA" />
     <uses-permission android:name="android.permission.CAMERA_FLASH" />
 
     <application
+        android:name=".App"
         android:allowBackup="true"
         android:label="AI Assistant"
         android:supportsRtl="true"

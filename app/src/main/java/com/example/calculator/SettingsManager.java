@@ -2,7 +2,6 @@ package com.example.calculator;
 
 import android.content.Context;
 import android.content.SharedPreferences;
-import android.preference.PreferenceManager;
 import com.google.gson.Gson;
 import com.google.gson.reflect.TypeToken;
 import java.lang.reflect.Type;
@@ -10,6 +9,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 public class SettingsManager {
+    private static final String PREFS_NAME = "app_settings";
     private static final String PREFS_API_KEY = "gemini_api_key";
     private static final String PREFS_SELECTED_MODEL = "selected_model";
     private static final String PREFS_CACHED_MODELS = "cached_models";
@@ -19,7 +19,7 @@ public class SettingsManager {
     private final Gson gson;
 
     public SettingsManager(Context context) {
-        this.prefs = PreferenceManager.getDefaultSharedPreferences(context);
+        this.prefs = context.getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE);
         this.gson = new Gson();
     }
 

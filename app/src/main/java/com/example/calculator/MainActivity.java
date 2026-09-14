@@ -48,9 +48,10 @@ public class MainActivity extends AppCompatActivity {
     private MaterialButton sendButton;
     private View loadingIndicator;
 
-    private final GeminiManager geminiManager;
+    private GeminiManager geminiManager;
     private final FlashlightTool flashlightTool = new FlashlightTool();
-    private final SettingsManager settingsManager;
+    private SettingsManager settingsManager;
+    private boolean isReady = false;
 
     private final List<Map<String, Object>> tools = Arrays.asList(
         new HashMap<String, Object>() {{
@@ -69,37 +70,28 @@ public class MainActivity extends AppCompatActivity {
         }}
     );
 
-    public MainActivity() {
-        settingsManager = new SettingsManager(this);
-        geminiManager = new GeminiManager(this);
-    }
-
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
-
-        // Check if API key is set
-        if (!settingsManager.hasApiKey()) {
-            startSettingsActivity();
-            return;
+        try {
+            settingsManager = new SettingsManager(this);
+            geminiManager = new GeminiManager(this);
+            initViews();
+            setupRecyclerView();
+            setupSendButton();
+            addMessage(new Message("assistant", "Hello! I'm your AI assistant. I can help you with various tasks including controlling your flashlight. How can I help you today?", false));
+            isReady = true;
+        } catch (Exception e) {
+            Log.e(TAG, "Error initializing MainActivity", e);
+            UiUtils.handleError(findViewById(android.R.id.content), this, "App error", e);
         }
-
-        flashlightTool.attachContext(this);
-
-        initViews();
-        setupRecyclerView();
-        setupSendButton();
-        
-        // Add welcome message
-        addMessage(new Message("assistant", "Hello! I'm your AI assistant. I can help you with various tasks including controlling your flashlight. How can I help you today?", false));
     }
 
     @Override
     protected void onResume() {
         super.onResume();
-        // Check if API key was set in settings
-        if (!settingsManager.hasApiKey()) {
+        if (isReady && !settingsManager.hasApiKey()) {
             startSettingsActivity();
         }
     }
@@ -190,8 +182,12 @@ public class MainActivity extends AppCompatActivity {
                 }
             } catch (Exception e) {
                 Log.e(TAG, "Error processing message", e);
+                String errMsg = UiUtils.buildErrorMessage("Request failed", e);
+                UiUtils.copyToClipboard(this, "Request error", errMsg);
+                String shortMsg = e.getMessage() != null ? e.getMessage() : e.toString();
                 runOnUiThread(() -> {
-                    addMessage(new Message("assistant", "Error: " + e.getMessage(), false));
+                    UiUtils.showSnackbar(findViewById(android.R.id.content), "Error: " + shortMsg);
+                    addMessage(new Message("assistant", "Error: " + shortMsg, false));
                     showLoading(false);
                 });
             }

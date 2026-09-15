@@ -53,6 +53,7 @@ public class MainActivity extends AppCompatActivity {
     private SettingsManager settingsManager;
     private DeviceTools deviceTools;
     private WebSearchTool webSearchTool;
+    private YouTubeSearchTool youtubeSearchTool;
     private boolean isReady = false;
 
     private static Map<String, Object> tool(String name, String description, Object... props) {
@@ -92,7 +93,11 @@ public class MainActivity extends AppCompatActivity {
             "seconds", intProp("Duration in seconds for timer, 1-86400", false),
             "label", stringProp("Optional label/message", false)),
         tool("WEB_SEARCH", "Searches the internet for up-to-date information. Returns the top results with titles, summaries and URLs. Use it when the user asks about current events, facts you are not sure about, or wants to find a specific web page or video.",
-            "query", stringProp("The search query", true))
+            "query", stringProp("The search query", true)),
+        tool("PLAY_YOUTUBE", "Searches YouTube and returns a list of ACTUAL videos: titles, durations and video IDs. Use this whenever the user wants to watch, play, or listen to something on YouTube (cartoons, music, movies, tutorials...). After getting the list, pick the most suitable video and call OPEN_YOUTUBE_VIDEO with its exact videoId. NEVER open a YouTube search page instead.",
+            "query", stringProp("What to search on YouTube", true)),
+        tool("OPEN_YOUTUBE_VIDEO", "Plays a specific YouTube video on the device. The videoId MUST be taken from the PLAY_YOUTUBE results, never invented.",
+            "videoId", stringProp("The 11-character YouTube video ID", true))
     );
 
     private static Map<String, Object> stringProp(String description, boolean required) {
@@ -120,6 +125,7 @@ public class MainActivity extends AppCompatActivity {
             geminiManager = new GeminiManager(this);
             deviceTools = new DeviceTools(this);
             webSearchTool = new WebSearchTool();
+            youtubeSearchTool = new YouTubeSearchTool();
             initViews();
             setupRecyclerView();
             setupSendButton();
@@ -197,11 +203,14 @@ public class MainActivity extends AppCompatActivity {
 
         new Thread(() -> {
             try {
-                final int MAX_STEPS = 6;
+                int MAX_STEPS = 6;
                 StringBuilder context = new StringBuilder(
                     "User request: " + text + "\n" +
-                    "If you need more info or a web page, use the search tool, then if appropriate open it with OPEN_APP_URL. " +
-                    "Loop tools until the task is done, then answer the user in their language.\n");
+                    "RULES: " +
+                    "- If the user wants to WATCH or PLAY a video/music/cartoon on YouTube, you MUST first call PLAY_YOUTUBE to get real videos, " +
+                    "choose the best one, then play it with OPEN_YOUTUBE_VIDEO using its videoId. Opening a YouTube search page is FORBIDDEN and counts as failure. " +
+                    "- If you need up-to-date facts from the web, call WEB_SEARCH. " +
+                    "- Loop tools until the task is fully done, then answer the user in their language.\n");
 
                 String finalResponse = null;
                 for (int step = 0; step < MAX_STEPS; step++) {
@@ -266,6 +275,12 @@ public class MainActivity extends AppCompatActivity {
                     String query = args.has("query") ? args.get("query").getAsString() : "";
                     return webSearchTool.search(query);
                 }
+                case "PLAY_YOUTUBE": {
+                    String query = args.has("query") ? args.get("query").getAsString() : "";
+                    return youtubeSearchTool.searchText(query);
+                }
+                case "OPEN_YOUTUBE_VIDEO":
+                    return deviceTools.openYouTubeVideo(args);
                 default:
                     return "Unknown tool: " + funcName;
             }

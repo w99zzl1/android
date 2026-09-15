@@ -33,10 +33,28 @@ public class DeviceTools {
 
         String url = target.contains("://") ? target : "https://" + target;
         if (!url.matches("^https?://.+")) return "Not a valid URL: " + target;
+
+        if (url.contains("youtube.com") || url.contains("youtu.be")) {
+            if (url.contains("/results") || url.contains("search_query")) {
+                return "I do not open YouTube search pages. Use PLAY_YOUTUBE to find real videos, " +
+                       "then play the chosen one with OPEN_YOUTUBE_VIDEO.";
+            }
+        }
+
         Intent browser = new Intent(Intent.ACTION_VIEW, Uri.parse(url));
         browser.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
         context.startActivity(browser);
         return "Opened URL: " + url;
+    }
+
+    public String openYouTubeVideo(JsonObject args) {
+        String videoId = args.has("videoId") ? args.get("videoId").getAsString().trim() : "";
+        if (!videoId.matches("[A-Za-z0-9_-]{11}")) {
+            return "Invalid videoId: '" + videoId + "'. Please use a videoId from the PLAY_YOUTUBE results, never invent one.";
+        }
+        context.startActivity(new Intent(Intent.ACTION_VIEW,
+            Uri.parse("https://www.youtube.com/watch?v=" + videoId)).addFlags(Intent.FLAG_ACTIVITY_NEW_TASK));
+        return "Playing YouTube video: " + videoId;
     }
 
     public String setAlarmTimer(JsonObject args) {

@@ -218,10 +218,10 @@ public class MainActivity extends AppCompatActivity {
 
     private void sendMessage(String text) {
         if (text == null || text.trim().isEmpty()) return;
-        text = text.trim();
+        String finalText = text.trim();
 
         // Add user message
-        addMessage(new Message("user", text, false));
+        addMessage(new Message("user", finalText, false));
         inputField.setText("");
 
         // Show loading
@@ -231,7 +231,7 @@ public class MainActivity extends AppCompatActivity {
             try {
                 int MAX_STEPS = 6;
                 StringBuilder context = new StringBuilder(
-                    "User request: " + text + "\n" +
+                    "User request: " + finalText + "\n" +
                     "RULES: " +
                     "- If the user wants to WATCH or PLAY a video/music/cartoon on YouTube, you MUST first call PLAY_YOUTUBE to get real videos, " +
                     "choose the best one, then play it with OPEN_YOUTUBE_VIDEO using its videoId. Opening a YouTube search page is FORBIDDEN and counts as failure. " +

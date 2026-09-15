@@ -52,6 +52,7 @@ public class MainActivity extends AppCompatActivity {
     private final FlashlightTool flashlightTool = new FlashlightTool();
     private SettingsManager settingsManager;
     private DeviceTools deviceTools;
+    private WebSearchTool webSearchTool;
     private boolean isReady = false;
 
     private static Map<String, Object> tool(String name, String description, Object... props) {
@@ -90,11 +91,8 @@ public class MainActivity extends AppCompatActivity {
             "minute", intProp("Minute for alarm, 0-59", false),
             "seconds", intProp("Duration in seconds for timer, 1-86400", false),
             "label", stringProp("Optional label/message", false)),
-        tool("SET_VOLUME", "Changes the volume of a stream. stream is one of: media, ring, alarm, notification, call. volume is 0-100 percent.",
-            "stream", stringProp("media, ring, alarm, notification, or call", true),
-            "volume", intProp("Volume 0-100 percent", true)),
-        tool("SET_BRIGHTNESS", "Sets the screen brightness to a percentage (0-100).",
-            "percent", intProp("Brightness 0-100 percent", true))
+        tool("WEB_SEARCH", "Searches the internet for up-to-date information. Returns the top results with titles, summaries and URLs. Use it when the user asks about current events, facts you are not sure about, or wants to find a specific web page or video.",
+            "query", stringProp("The search query", true))
     );
 
     private static Map<String, Object> stringProp(String description, boolean required) {
@@ -121,6 +119,7 @@ public class MainActivity extends AppCompatActivity {
             settingsManager = new SettingsManager(this);
             geminiManager = new GeminiManager(this);
             deviceTools = new DeviceTools(this);
+            webSearchTool = new WebSearchTool();
             initViews();
             setupRecyclerView();
             setupSendButton();
@@ -198,32 +197,38 @@ public class MainActivity extends AppCompatActivity {
 
         new Thread(() -> {
             try {
-                String response = geminiManager.processMessage(text, tools);
+                final int MAX_STEPS = 6;
+                StringBuilder context = new StringBuilder(
+                    "User request: " + text + "\n" +
+                    "If you need more info or a web page, use the search tool, then if appropriate open it with OPEN_APP_URL. " +
+                    "Loop tools until the task is done, then answer the user in their language.\n");
 
-                if (response != null && response.startsWith("FUNCTION_CALL:")) {
-                    String[] parts = response.substring("FUNCTION_CALL:".length()).split("\\|", 2);
-                    String funcName = parts[0];
-                    String argsJson = parts.length > 1 ? parts[1] : "{}";
+                String finalResponse = null;
+                for (int step = 0; step < MAX_STEPS; step++) {
+                    String response = geminiManager.processMessage(context.toString(), tools);
 
-                    String toolResult = executeTool(funcName, argsJson);
+                    if (response != null && response.startsWith("FUNCTION_CALL:")) {
+                        String[] parts = response.substring("FUNCTION_CALL:".length()).split("\\|", 2);
+                        String funcName = parts[0];
+                        String argsJson = parts.length > 1 ? parts[1] : "{}";
 
-                    String finalResponse = geminiManager.processMessage(
-                        "Based on the tool result: " + toolResult + ". Now respond to the user.",
-                        tools
-                    );
+                        String toolResult = executeTool(funcName, argsJson);
 
-                    String finalMsg = finalResponse != null ? finalResponse : "Done.";
-                    runOnUiThread(() -> {
-                        addMessage(new Message("assistant", finalMsg, false));
-                        showLoading(false);
-                    });
-                } else {
-                    String finalMsg = response != null ? response : "No response from AI.";
-                    runOnUiThread(() -> {
-                        addMessage(new Message("assistant", finalMsg, false));
-                        showLoading(false);
-                    });
+                        context.append("Tool called: ").append(funcName)
+                               .append(argsJson.isEmpty() || "{}".equals(argsJson) ? "" : " args=" + argsJson)
+                               .append("\nTool result: ").append(toolResult)
+                               .append("\nContinue: if another tool is needed, call it; otherwise answer the user now.\n");
+                    } else {
+                        finalResponse = response;
+                        break;
+                    }
                 }
+
+                String finalMsg = finalResponse != null ? finalResponse : "Done.";
+                runOnUiThread(() -> {
+                    addMessage(new Message("assistant", finalMsg, false));
+                    showLoading(false);
+                });
             } catch (Exception e) {
                 Log.e(TAG, "Error processing message", e);
                 String errMsg = UiUtils.buildErrorMessage("Request failed", e);
@@ -257,10 +262,10 @@ public class MainActivity extends AppCompatActivity {
                     return deviceTools.openAppUrl(args);
                 case "SET_ALARM_TIMER":
                     return deviceTools.setAlarmTimer(args);
-                case "SET_VOLUME":
-                    return deviceTools.setVolume(args);
-                case "SET_BRIGHTNESS":
-                    return deviceTools.setBrightness(args);
+                case "WEB_SEARCH": {
+                    String query = args.has("query") ? args.get("query").getAsString() : "";
+                    return webSearchTool.search(query);
+                }
                 default:
                     return "Unknown tool: " + funcName;
             }

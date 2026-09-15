@@ -3,9 +3,7 @@ package com.example.calculator;
 import android.provider.AlarmClock;
 import android.content.Context;
 import android.content.Intent;
-import android.media.AudioManager;
 import android.net.Uri;
-import android.provider.Settings;
 
 import com.google.gson.JsonObject;
 
@@ -13,11 +11,9 @@ import java.util.Locale;
 
 public class DeviceTools {
     private final Context context;
-    private final AudioManager audioManager;
 
     public DeviceTools(Context context) {
         this.context = context;
-        this.audioManager = (AudioManager) context.getSystemService(Context.AUDIO_SERVICE);
     }
 
     public String openAppUrl(JsonObject args) {
@@ -76,52 +72,5 @@ public class DeviceTools {
         } catch (Exception e) {
             return "Could not open alarm/timer: " + e.getMessage();
         }
-    }
-
-    public String setVolume(JsonObject args) {
-        String streamName = args.has("stream") ? args.get("stream").getAsString().toLowerCase(Locale.ROOT) : "media";
-        int percent = args.has("volume") ? args.get("volume").getAsInt() : 0;
-        percent = Math.max(0, Math.min(100, percent));
-
-        int stream;
-        switch (streamName) {
-            case "ring":
-                stream = AudioManager.STREAM_RING;
-                break;
-            case "alarm":
-                stream = AudioManager.STREAM_ALARM;
-                break;
-            case "notification":
-                stream = AudioManager.STREAM_NOTIFICATION;
-                break;
-            case "call":
-                stream = AudioManager.STREAM_VOICE_CALL;
-                break;
-            default:
-                stream = AudioManager.STREAM_MUSIC;
-                streamName = "media";
-        }
-
-        int max = audioManager.getStreamMaxVolume(stream);
-        if (max <= 0) return "Cannot adjust volume stream: " + streamName;
-        int level = Math.round(max * percent / 100f);
-        audioManager.setStreamVolume(stream, level, 0);
-        return "Set " + streamName + " volume to " + percent + "%";
-    }
-
-    public String setBrightness(JsonObject args) {
-        int percent = args.has("percent") ? args.get("percent").getAsInt() : 50;
-        percent = Math.max(0, Math.min(100, percent));
-
-        if (!Settings.System.canWrite(context)) {
-            return "Setting brightness requires the special permission. " +
-                "Open Settings in the app, tap 'Allow brightness control' and enable it, then try again.";
-        }
-
-        int brightness = Math.round(255 * percent / 100f);
-        Settings.System.putInt(context.getContentResolver(), Settings.System.SCREEN_BRIGHTNESS, brightness);
-        Settings.System.putInt(context.getContentResolver(), Settings.System.SCREEN_BRIGHTNESS_MODE,
-            Settings.System.SCREEN_BRIGHTNESS_MODE_MANUAL);
-        return "Set screen brightness to " + percent + "%";
     }
 }

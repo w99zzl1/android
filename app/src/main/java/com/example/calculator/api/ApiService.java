@@ -140,21 +140,26 @@ public class ApiService {
         
         com.google.gson.JsonArray parts = content.getAsJsonArray("parts");
         if (parts.size() == 0) return "No response from AI.";
-        
-        JsonObject part = parts.get(0).getAsJsonObject();
-        
-        // Check for function call
-        if (part.has("functionCall")) {
-            JsonObject fc = part.getAsJsonObject("functionCall");
-            String name = fc.get("name").getAsString();
-            JsonObject args = fc.getAsJsonObject("args");
-            return "FUNCTION_CALL:" + name + "|" + args.toString();
+
+        StringBuilder text = new StringBuilder();
+        for (JsonElement partEl : parts) {
+            if (!partEl.isJsonObject()) continue;
+            JsonObject part = partEl.getAsJsonObject();
+
+            // Check for function call
+            if (part.has("functionCall")) {
+                JsonObject fc = part.getAsJsonObject("functionCall");
+                String name = fc.get("name").getAsString();
+                JsonObject args = fc.getAsJsonObject("args");
+                return "FUNCTION_CALL:" + name + "|" + args.toString();
+            }
+
+            if (part.has("text")) {
+                if (text.length() > 0) text.append('\n');
+                text.append(part.get("text").getAsString());
+            }
         }
-        
-        if (part.has("text")) {
-            return part.get("text").getAsString();
-        }
-        
-        return "No response from AI.";
+
+        return text.length() > 0 ? text.toString() : "No response from AI.";
     }
 }

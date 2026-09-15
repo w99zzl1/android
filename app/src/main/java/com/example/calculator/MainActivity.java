@@ -45,6 +45,11 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
+import java.util.concurrent.ExecutionException;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.TimeoutException;
 
 public class MainActivity extends AppCompatActivity {
     private static final String TAG = "MainActivity";
@@ -229,8 +234,11 @@ public class MainActivity extends AppCompatActivity {
         showLoading(true);
 
         new Thread(() -> {
+            ExecutorService exec = Executors.newCachedThreadPool();
+            long stepsStart = System.currentTimeMillis();
             try {
                 int MAX_STEPS = 6;
+                final long overallDeadline = System.currentTimeMillis() + 90_000;
                 StringBuilder context = new StringBuilder(
                     "User request: " + finalText + "\n" +
                     "RULES: " +
@@ -241,17 +249,47 @@ public class MainActivity extends AppCompatActivity {
 
                 String finalResponse = null;
                 for (int step = 0; step < MAX_STEPS; step++) {
-                    String response = geminiManager.processMessage(context.toString(), tools);
-                    LogManager.log("MODEL", "Step " + (step + 1) + " response: " + LogManager.clip(response, 500));
+                    if (System.currentTimeMillis() > overallDeadline) {
+                        throw new IllegalArgumentException("Task timed out after 90s");
+                    }
+
+                    LogManager.log("MODEL", "Step " + (step + 1) + "/" + MAX_STEPS + " calling Gemini...");
+                    final String stepMessage = context.toString();
+                    long t0 = System.currentTimeMillis();
+                    String response;
+                    try {
+                        response = exec.submit(() -> geminiManager.processMessage(stepMessage, tools))
+                                .get(25, TimeUnit.SECONDS);
+                    } catch (TimeoutException te) {
+                        throw new IllegalArgumentException("Gemini call on step " + (step + 1) + " timed out (25s). Check API/model settings");
+                    } catch (ExecutionException ee) {
+                        Throwable cause = ee.getCause();
+                        throw cause instanceof Exception ? (Exception) cause : new RuntimeException(cause);
+                    }
+                    long stepMs = System.currentTimeMillis() - t0;
+                    LogManager.log("MODEL", "Step " + (step + 1) + " took " + stepMs + "ms | response: " + LogManager.clip(response, 500));
 
                     if (response != null && response.startsWith("FUNCTION_CALL:")) {
                         String[] parts = response.substring("FUNCTION_CALL:".length()).split("\\|", 2);
                         String funcName = parts[0];
                         String argsJson = parts.length > 1 ? parts[1] : "{}";
 
-                        String toolResult = executeTool(funcName, argsJson);
-                        LogManager.log("TOOL", funcName + " args=" + LogManager.clip(argsJson, 200)
-                                + " -> " + LogManager.clip(toolResult, 400));
+                        LogManager.log("TOOL", "START " + funcName + " args=" + LogManager.clip(argsJson, 200));
+                        long toolT0 = System.currentTimeMillis();
+                        String toolResult;
+                        try {
+                            toolResult = exec.submit(() -> executeTool(funcName, argsJson))
+                                    .get(45, TimeUnit.SECONDS);
+                        } catch (TimeoutException te) {
+                            throw new IllegalArgumentException("Tool " + funcName + " timed out after 45s");
+                        } catch (ExecutionException ee) {
+                            Throwable cause = ee.getCause();
+                            throw cause instanceof RuntimeException
+                                    ? (RuntimeException) cause
+                                    : new RuntimeException(cause);
+                        }
+                        LogManager.log("TOOL", funcName + " took " + (System.currentTimeMillis() - toolT0) + "ms -> "
+                                + LogManager.clip(toolResult, 400));
 
                         context.append("Tool called: ").append(funcName)
                                .append(argsJson.isEmpty() || "{}".equals(argsJson) ? "" : " args=" + argsJson)
@@ -259,19 +297,26 @@ public class MainActivity extends AppCompatActivity {
                                .append("\nContinue: if another tool is needed, call it; otherwise answer the user now.\n");
                     } else {
                         finalResponse = response;
-                        LogManager.log("MODEL", "Final response: " + LogManager.clip(response, 500));
+                        LogManager.log("MODEL", "Final response after " + (System.currentTimeMillis() - stepsStart) + "ms: "
+                                + LogManager.clip(response, 500));
                         break;
                     }
                 }
 
-                String finalMsg = finalResponse != null ? finalResponse : "Done.";
+                if (finalResponse == null) {
+                    finalResponse = "Done. (steps exhausted)";
+                    LogManager.log("MODEL", "Steps exhausted without a final text answer");
+                }
+
+                String finalMsg = finalResponse;
                 runOnUiThread(() -> {
                     addMessage(new Message("assistant", finalMsg, false));
                     showLoading(false);
                 });
             } catch (Exception e) {
                 Log.e(TAG, "Error processing message", e);
-                LogManager.log("ERROR", "Request failed: " + LogManager.clip(e.getMessage(), 500));
+                LogManager.log("ERROR", "Request failed after " + (System.currentTimeMillis() - stepsStart) + "ms: "
+                        + LogManager.clip(e.getMessage(), 500));
                 String errMsg = UiUtils.buildErrorMessage("Request failed", e);
                 UiUtils.copyToClipboard(this, "Request error", errMsg);
                 String shortMsg = e.getMessage() != null ? e.getMessage() : e.toString();
@@ -280,6 +325,8 @@ public class MainActivity extends AppCompatActivity {
                     addMessage(new Message("assistant", "Error: " + shortMsg, false));
                     showLoading(false);
                 });
+            } finally {
+                exec.shutdownNow();
             }
         }).start();
     }

@@ -4,7 +4,9 @@ import com.google.gson.JsonArray;
 import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
+import okhttp3.OkHttpClient;
 import retrofit2.Call;
+import retrofit2.Response;
 import retrofit2.Retrofit;
 import retrofit2.converter.gson.GsonConverterFactory;
 import retrofit2.http.Body;
@@ -16,6 +18,7 @@ import retrofit2.http.Url;
 
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.TimeUnit;
 
 public class ApiService {
     private static final String BASE_URL = "https://generativelanguage.googleapis.com/v1beta/";
@@ -26,8 +29,14 @@ public class ApiService {
     private static final com.google.gson.Gson gson = new com.google.gson.Gson();
 
     public ApiService() {
+        OkHttpClient client = new OkHttpClient.Builder()
+            .connectTimeout(15, TimeUnit.SECONDS)
+            .readTimeout(30, TimeUnit.SECONDS)
+            .writeTimeout(30, TimeUnit.SECONDS)
+            .build();
         Retrofit retrofit = new Retrofit.Builder()
             .baseUrl(BASE_URL)
+            .client(client)
             .addConverterFactory(GsonConverterFactory.create(gson))
             .build();
         this.geminiApi = retrofit.create(GeminiApi.class);
@@ -51,11 +60,34 @@ public class ApiService {
     }
 
     public JsonElement generateContent(String apiKey, String model, JsonObject request) throws Exception {
-        return geminiApi.generateContent(apiKey, model, request).execute().body();
+        Response<JsonElement> resp = geminiApi.generateContent(apiKey, model, request).execute();
+        if (!resp.isSuccessful()) {
+            throw new Exception("Gemini API error " + resp.code() + ": " + readErrorBody(resp));
+        }
+        JsonElement body = resp.body();
+        if (body == null) {
+            throw new Exception("Gemini API returned empty body (HTTP " + resp.code() + ")");
+        }
+        return body;
+    }
+
+    private String readErrorBody(Response<?> resp) {
+        if (resp.errorBody() == null) return "no details";
+        try {
+            String s = resp.errorBody().string();
+            if (s.length() > 400) s = s.substring(0, 400);
+            return s;
+        } catch (Exception e) {
+            return "could not read error body";
+        }
     }
 
     public List<String> listModels(String apiKey) throws Exception {
-        JsonElement response = modelsApi.listModels(apiKey).execute().body();
+        Response<JsonElement> resp = modelsApi.listModels(apiKey).execute();
+        if (!resp.isSuccessful()) {
+            throw new Exception("Gemini API error " + resp.code() + ": " + readErrorBody(resp));
+        }
+        JsonElement response = resp.body();
         if (response == null || !response.isJsonObject()) return java.util.Collections.emptyList();
         
         JsonObject obj = response.getAsJsonObject();
@@ -127,14 +159,29 @@ public class ApiService {
         if (response == null || !response.isJsonObject()) return "No response from AI.";
         
         JsonObject obj = response.getAsJsonObject();
+
+        if (obj.has("error") && obj.get("error").isJsonObject()) {
+            JsonObject err = obj.get("error").getAsJsonObject();
+            String msg = err.has("message") ? err.get("message").getAsString() : "unknown";
+            String code = err.has("code") ? String.valueOf(err.get("code").getAsInt()) : "?";
+            return "API error " + code + ": " + msg;
+        }
+
         if (!obj.has("candidates")) return "No response from AI.";
         
         com.google.gson.JsonArray candidates = obj.getAsJsonArray("candidates");
         if (candidates.size() == 0) return "No response from AI.";
         
         JsonObject candidate = candidates.get(0).getAsJsonObject();
-        if (!candidate.has("content")) return "No response from AI.";
-        
+
+        if (candidate.has("finishReason")
+                && !"STOP".equals(candidate.get("finishReason").getAsString())
+                && !candidate.has("content")) {
+            return "AI stopped early: " + candidate.get("finishReason").getAsString()
+                    + ". Try rewording the request.";
+        }
+
+        if (!candidate.has("content")) return "No response from AI.";        
         JsonObject content = candidate.getAsJsonObject("content");
         if (!content.has("parts")) return "No response from AI.";
         

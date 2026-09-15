@@ -1,10 +1,14 @@
 package com.example.calculator;
 
+import android.Manifest;
 import android.content.ClipData;
 import android.content.ClipboardManager;
 import android.content.Context;
 import android.content.Intent;
+import android.content.pm.PackageManager;
 import android.os.Bundle;
+import android.speech.RecognizerIntent;
+import android.speech.SpeechRecognizer;
 import android.text.Html;
 import android.text.method.LinkMovementMethod;
 import android.util.Log;
@@ -14,6 +18,7 @@ import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
 import android.view.ViewGroup;
+import android.widget.ImageButton;
 import android.widget.LinearLayout;
 import android.widget.TextView;
 import android.widget.Toast;
@@ -21,6 +26,7 @@ import android.widget.Toast;
 import androidx.annotation.NonNull;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.appcompat.widget.Toolbar;
+import androidx.core.app.ActivityCompat;
 import androidx.core.content.ContextCompat;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
@@ -36,6 +42,7 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
+import java.util.Locale;
 import java.util.Map;
 
 public class MainActivity extends AppCompatActivity {
@@ -55,6 +62,12 @@ public class MainActivity extends AppCompatActivity {
     private WebSearchTool webSearchTool;
     private YouTubeSearchTool youtubeSearchTool;
     private boolean isReady = false;
+
+    private static final int REQ_RECORD_AUDIO = 1001;
+    private static final String WAKE_WORD = "вега";
+    private ImageButton micButton;
+    private SpeechRecognizer speechRecognizer;
+    private Intent speechRecognizerIntent;
 
     private static Map<String, Object> tool(String name, String description, Object... props) {
         Map<String, Object> parameters = new HashMap<>();
@@ -129,6 +142,7 @@ public class MainActivity extends AppCompatActivity {
             initViews();
             setupRecyclerView();
             setupSendButton();
+            setupMicButton();
             addMessage(new Message("assistant", "Hello! I'm your AI assistant. I can control your phone: flashlight, screen brightness, volume, open apps/web pages, set alarms and timers. What can I do for you?", false));
             isReady = true;
         } catch (Exception e) {
@@ -176,8 +190,13 @@ public class MainActivity extends AppCompatActivity {
         inputField = findViewById(R.id.inputField);
         sendButton = findViewById(R.id.sendButton);
         loadingIndicator = findViewById(R.id.loadingIndicator);
+        micButton = findViewById(R.id.micButton);
 
         flashlightTool.attachContext(this);
+    }
+
+    private void setupMicButton() {
+        micButton.setOnClickListener(v -> startVoiceInput());
     }
 
     private void setupRecyclerView() {
@@ -193,6 +212,12 @@ public class MainActivity extends AppCompatActivity {
     private void sendMessage() {
         String text = inputField.getText().toString().trim();
         if (text.isEmpty()) return;
+        sendMessage(text);
+    }
+
+    private void sendMessage(String text) {
+        if (text == null || text.trim().isEmpty()) return;
+        text = text.trim();
 
         // Add user message
         addMessage(new Message("user", text, false));
@@ -302,7 +327,127 @@ public class MainActivity extends AppCompatActivity {
             loadingIndicator.setVisibility(show ? View.VISIBLE : View.GONE);
             sendButton.setEnabled(!show);
             inputField.setEnabled(!show);
+            if (micButton != null) micButton.setEnabled(!show);
         });
+    }
+
+    private void startVoiceInput() {
+        if (!SpeechRecognizer.isRecognitionAvailable(this)) {
+            UiUtils.showSnackbar(findViewById(android.R.id.content), "Speech recognition is not available on this device");
+            return;
+        }
+        if (ContextCompat.checkSelfPermission(this, Manifest.permission.RECORD_AUDIO)
+                != PackageManager.PERMISSION_GRANTED) {
+            ActivityCompat.requestPermissions(this, new String[]{Manifest.permission.RECORD_AUDIO}, REQ_RECORD_AUDIO);
+            return;
+        }
+
+        if (speechRecognizer == null) {
+            speechRecognizer = SpeechRecognizer.createSpeechRecognizer(this);
+            speechRecognizer.setRecognitionListener(recognitionListener);
+            speechRecognizerIntent = new Intent(RecognizerIntent.ACTION_RECOGNIZE_SPEECH);
+            speechRecognizerIntent.putExtra(RecognizerIntent.EXTRA_LANGUAGE_MODEL, RecognizerIntent.LANGUAGE_MODEL_FREE_FORM);
+            speechRecognizerIntent.putExtra(RecognizerIntent.EXTRA_PARTIAL_RESULTS, true);
+            speechRecognizerIntent.putExtra(RecognizerIntent.EXTRA_MAX_RESULTS, 1);
+        }
+
+        try {
+            UiUtils.showSnackbar(findViewById(android.R.id.content), "Listening... say 'Вега, ...' for hands-free");
+            speechRecognizer.startListening(speechRecognizerIntent);
+        } catch (Exception e) {
+            Log.e(TAG, "Voice input error", e);
+            UiUtils.handleError(findViewById(android.R.id.content), this, "Voice input error", e);
+        }
+    }
+
+    private final SpeechRecognizer.RecognitionListener recognitionListener = new SpeechRecognizer.RecognitionListener() {
+        @Override
+        public void onReadyForSpeech(Bundle params) {
+        }
+
+        @Override
+        public void onBeginningOfSpeech() {
+        }
+
+        @Override
+        public void onRmsChanged(float rms) {
+        }
+
+        @Override
+        public void onBufferReceived(byte[] buffer) {
+        }
+
+        @Override
+        public void onEndOfSpeech() {
+        }
+
+        @Override
+        public void onError(int error) {
+            if (error != SpeechRecognizer.ERROR_NO_MATCH && error != SpeechRecognizer.ERROR_SPEECH_TIMEOUT) {
+                UiUtils.showSnackbar(findViewById(android.R.id.content), "Voice input error (code " + error + ")");
+            }
+        }
+
+        @Override
+        public void onResults(Bundle results) {
+            handleSpeechResult(results);
+        }
+
+        @Override
+        public void onPartialResults(Bundle partialResults) {
+            handleSpeechResult(partialResults);
+        }
+
+        @Override
+        public void onEvent(int eventType, Bundle params) {
+        }
+    };
+
+    private void handleSpeechResult(Bundle results) {
+        List<String> matches = results.getStringArrayList(SpeechRecognizer.RESULTS_RECOGNITION);
+        if (matches == null || matches.isEmpty()) return;
+        processVoicePhrase(matches.get(0));
+    }
+
+    private void processVoicePhrase(String phrase) {
+        if (phrase == null) return;
+        phrase = phrase.trim();
+        if (phrase.isEmpty()) return;
+
+        boolean wake = phrase.toLowerCase(Locale.ROOT).startsWith(WAKE_WORD);
+        String remainder = phrase;
+        if (wake) {
+            remainder = phrase.substring(WAKE_WORD.length()).replaceFirst("^[\\s\\p{Punct}]+", "").trim();
+        }
+
+        final String cleanPhrase = wake ? remainder : phrase;
+
+        runOnUiThread(() -> {
+            if (cleanPhrase.isEmpty()) {
+                UiUtils.showSnackbar(findViewById(android.R.id.content),
+                    "Say a command after 'Вега', e.g. 'Вега, включи мультики'");
+                return;
+            }
+            if (wake) {
+                sendMessage(cleanPhrase);
+            } else {
+                inputField.setText(cleanPhrase);
+                inputField.setSelection(cleanPhrase.length());
+                UiUtils.showSnackbar(findViewById(android.R.id.content), "Recognized - tap send to use");
+            }
+        });
+    }
+
+    @Override
+    public void onRequestPermissionsResult(int requestCode, @NonNull String[] permissions, @NonNull int[] grantResults) {
+        super.onRequestPermissionsResult(requestCode, permissions, grantResults);
+        if (requestCode == REQ_RECORD_AUDIO
+                && grantResults.length > 0
+                && grantResults[0] == PackageManager.PERMISSION_GRANTED) {
+            startVoiceInput();
+        } else if (requestCode == REQ_RECORD_AUDIO) {
+            UiUtils.showSnackbar(findViewById(android.R.id.content), "Microphone permission required for voice input");
+        }
     }
 
     private void clearChat() {
@@ -324,5 +469,9 @@ public class MainActivity extends AppCompatActivity {
     @Override
     protected void onDestroy() {
         super.onDestroy();
+        if (speechRecognizer != null) {
+            speechRecognizer.destroy();
+            speechRecognizer = null;
+        }
     }
 }

@@ -3,16 +3,14 @@ package com.example.calculator;
 import android.content.ClipData;
 import android.content.ClipboardManager;
 import android.content.Context;
+import android.graphics.Color;
 import android.text.Html;
-import android.text.method.LinkMovementMethod;
 import android.text.Spanned;
 import android.text.method.LinkMovementMethod;
 import android.view.LayoutInflater;
-import android.view.Menu;
-import android.view.MenuItem;
 import android.view.View;
 import android.view.ViewGroup;
-import android.widget.PopupMenu;
+import android.widget.ImageButton;
 import android.widget.TextView;
 import android.widget.Toast;
 
@@ -20,9 +18,7 @@ import androidx.annotation.NonNull;
 import androidx.core.content.ContextCompat;
 import androidx.recyclerview.widget.RecyclerView;
 
-
 import com.google.android.material.card.MaterialCardView;
-import android.widget.ImageButton;
 
 import java.util.List;
 
@@ -56,15 +52,15 @@ public class MessagesAdapter extends RecyclerView.Adapter<MessagesAdapter.Messag
     class MessageViewHolder extends RecyclerView.ViewHolder {
         MaterialCardView cardView;
         TextView messageText;
+        TextView metaText;
         ImageButton copyButton;
-        View senderIndicator;
 
         public MessageViewHolder(@NonNull View itemView) {
             super(itemView);
             cardView = itemView.findViewById(R.id.messageCard);
             messageText = itemView.findViewById(R.id.messageText);
+            metaText = itemView.findViewById(R.id.metaText);
             copyButton = itemView.findViewById(R.id.copyButton);
-            senderIndicator = itemView.findViewById(R.id.senderIndicator);
         }
 
         public void bind(Message message) {
@@ -73,16 +69,27 @@ public class MessagesAdapter extends RecyclerView.Adapter<MessagesAdapter.Messag
             messageText.setText(text);
             messageText.setMovementMethod(LinkMovementMethod.getInstance());
 
-            // Style based on sender
+            int primary = ContextCompat.getColor(cardView.getContext(), R.color.primary);
+            int white = Color.WHITE;
+
             if (message.isUser) {
-                cardView.setCardBackgroundColor(cardView.getContext().getColor(com.example.calculator.R.color.primary));
-                senderIndicator.setBackgroundColor(ContextCompat.getColor(cardView.getContext(), com.example.calculator.R.color.primary));
+                cardView.setCardBackgroundColor(primary);
+                cardView.setStrokeColor(primary);
+                messageText.setTextColor(white);
+                metaText.setText("You");
+                metaText.setTextColor(Color.argb(180, 255, 255, 255));
+                copyButton.setColorFilter(white);
             } else {
-                cardView.setCardBackgroundColor(cardView.getContext().getColor(com.example.calculator.R.color.surface));
-                senderIndicator.setBackgroundColor(ContextCompat.getColor(cardView.getContext(), com.example.calculator.R.color.primary));
+                cardView.setCardBackgroundColor(ContextCompat.getColor(cardView.getContext(), R.color.surface));
+                cardView.setStrokeColor(ContextCompat.getColor(cardView.getContext(), R.color.border));
+                messageText.setTextColor(ContextCompat.getColor(cardView.getContext(), R.color.on_surface));
+                metaText.setText("Vega");
+                metaText.setTextColor(ContextCompat.getColor(cardView.getContext(), R.color.meta));
+                copyButton.setColorFilter(ContextCompat.getColor(cardView.getContext(), R.color.meta));
             }
+
             // Align bubbles: user to the end (right), assistant to the start (left)
-            android.view.ViewGroup.LayoutParams lp = cardView.getLayoutParams();
+            ViewGroup.LayoutParams lp = cardView.getLayoutParams();
             if (lp instanceof androidx.constraintlayout.widget.ConstraintLayout.LayoutParams) {
                 androidx.constraintlayout.widget.ConstraintLayout.LayoutParams params =
                     (androidx.constraintlayout.widget.ConstraintLayout.LayoutParams) lp;

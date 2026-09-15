@@ -1,22 +1,19 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <!-- Base application theme. -->
-    <style name="Theme.Calculator" parent="Theme.MaterialComponents.DayNight.NoActionBar">
-        <!-- Primary brand color. -->
+    <!-- Base application theme (light, messenger style). -->
+    <style name="Theme.Calculator" parent="Theme.MaterialComponents.Light.NoActionBar">
         <item name="colorPrimary">@color/primary</item>
         <item name="colorPrimaryVariant">@color/primary_variant</item>
         <item name="colorOnPrimary">@color/on_primary</item>
-        <!-- Secondary brand color. -->
         <item name="colorSecondary">@color/secondary</item>
         <item name="colorSecondaryVariant">@color/secondary</item>
-        <item name="colorOnSecondary">@color/on_primary</item>
-        <!-- Status bar color. -->
-        <item name="android:statusBarColor">@color/primary_variant</item>
-        <!-- Customize your theme here. -->
-        <item name="android:windowBackground">@color/background</item>
+        <item name="colorOnSecondary">@color/on_surface</item>
         <item name="colorSurface">@color/surface</item>
         <item name="colorOnSurface">@color/on_surface</item>
-        <item name="android:windowLightStatusBar">false</item>
+        <item name="android:statusBarColor">@color/background</item>
+        <item name="android:navigationBarColor">@color/background</item>
+        <item name="android:windowBackground">@drawable/bg_app</item>
+        <item name="android:windowLightStatusBar">true</item>
     </style>
 
     <style name="Theme.Calculator.NoActionBar">
@@ -24,7 +21,7 @@
         <item name="windowNoTitle">true</item>
     </style>
 
-    <style name="Theme.Calculator.AppBarOverlay" parent="ThemeOverlay.MaterialComponents.Dark.ActionBar" />
+    <style name="Theme.Calculator.AppBarOverlay" parent="ThemeOverlay.MaterialComponents.ActionBar" />
 
     <style name="Theme.Calculator.PopupOverlay" parent="ThemeOverlay.MaterialComponents.Light" />
 </resources>

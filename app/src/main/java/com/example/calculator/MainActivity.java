@@ -219,6 +219,7 @@ public class MainActivity extends AppCompatActivity {
     private void sendMessage(String text) {
         if (text == null || text.trim().isEmpty()) return;
         String finalText = text.trim();
+        LogManager.log("APP", "User request: " + finalText);
 
         // Add user message
         addMessage(new Message("user", finalText, false));
@@ -241,6 +242,7 @@ public class MainActivity extends AppCompatActivity {
                 String finalResponse = null;
                 for (int step = 0; step < MAX_STEPS; step++) {
                     String response = geminiManager.processMessage(context.toString(), tools);
+                    LogManager.log("MODEL", "Step " + (step + 1) + " response: " + LogManager.clip(response, 500));
 
                     if (response != null && response.startsWith("FUNCTION_CALL:")) {
                         String[] parts = response.substring("FUNCTION_CALL:".length()).split("\\|", 2);
@@ -248,6 +250,8 @@ public class MainActivity extends AppCompatActivity {
                         String argsJson = parts.length > 1 ? parts[1] : "{}";
 
                         String toolResult = executeTool(funcName, argsJson);
+                        LogManager.log("TOOL", funcName + " args=" + LogManager.clip(argsJson, 200)
+                                + " -> " + LogManager.clip(toolResult, 400));
 
                         context.append("Tool called: ").append(funcName)
                                .append(argsJson.isEmpty() || "{}".equals(argsJson) ? "" : " args=" + argsJson)
@@ -255,6 +259,7 @@ public class MainActivity extends AppCompatActivity {
                                .append("\nContinue: if another tool is needed, call it; otherwise answer the user now.\n");
                     } else {
                         finalResponse = response;
+                        LogManager.log("MODEL", "Final response: " + LogManager.clip(response, 500));
                         break;
                     }
                 }
@@ -266,6 +271,7 @@ public class MainActivity extends AppCompatActivity {
                 });
             } catch (Exception e) {
                 Log.e(TAG, "Error processing message", e);
+                LogManager.log("ERROR", "Request failed: " + LogManager.clip(e.getMessage(), 500));
                 String errMsg = UiUtils.buildErrorMessage("Request failed", e);
                 UiUtils.copyToClipboard(this, "Request error", errMsg);
                 String shortMsg = e.getMessage() != null ? e.getMessage() : e.toString();
@@ -396,7 +402,7 @@ public class MainActivity extends AppCompatActivity {
 
         @Override
         public void onPartialResults(Bundle partialResults) {
-            handleSpeechResult(partialResults);
+            // Intentionally ignored: only the FINAL phrase is sent to the AI.
         }
 
         @Override
@@ -422,6 +428,7 @@ public class MainActivity extends AppCompatActivity {
         }
 
         final String cleanPhrase = wake ? remainder : phrase;
+        LogManager.log("VOICE", "Recognized: \"" + phrase + "\" wake=" + wake + " clean=\"" + cleanPhrase + "\"");
 
         runOnUiThread(() -> {
             if (cleanPhrase.isEmpty()) {

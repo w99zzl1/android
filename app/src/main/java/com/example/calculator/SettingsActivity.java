@@ -49,6 +49,9 @@ public class SettingsActivity extends AppCompatActivity {
     private RecyclerView modelsRecyclerView;
     private ModelsAdapter modelsAdapter;
     private List<String> availableModels = new ArrayList<>();
+    private TextView logsText;
+    private MaterialButton copyLogsButton;
+    private MaterialButton clearLogsButton;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -84,6 +87,9 @@ public class SettingsActivity extends AppCompatActivity {
         flashlightSwitch = findViewById(R.id.flashlightSwitch);
         modelsCard = findViewById(R.id.modelsCard);
         modelsRecyclerView = findViewById(R.id.modelsRecyclerView);
+        logsText = findViewById(R.id.logsText);
+        copyLogsButton = findViewById(R.id.copyLogsButton);
+        clearLogsButton = findViewById(R.id.clearLogsButton);
 
         modelsRecyclerView.setLayoutManager(new LinearLayoutManager(this));
         modelsAdapter = new ModelsAdapter();
@@ -91,8 +97,19 @@ public class SettingsActivity extends AppCompatActivity {
 
         saveButton.setOnClickListener(v -> saveSettings());
         fetchModelsButton.setOnClickListener(v -> fetchModels());
+        copyLogsButton.setOnClickListener(v -> {
+            String logs = logsText.getText().toString();
+            UiUtils.copyToClipboard(this, "App logs", logs);
+            Toast.makeText(this, "Logs copied", Toast.LENGTH_SHORT).show();
+        });
+        clearLogsButton.setOnClickListener(v -> {
+            LogManager.clear();
+            refreshLogs();
+            Toast.makeText(this, "Logs cleared", Toast.LENGTH_SHORT).show();
+        });
 
         apiKeyInput.setText(settingsManager.getApiKey());
+        refreshLogs();
         flashlightSwitch.setOnCheckedChangeListener((buttonView, isChecked) -> {
             if (!flashlightTool.toggle(isChecked ? "on" : "off")) {
                 showError("Could not control the flashlight (permission or device issue)");
@@ -116,6 +133,14 @@ public class SettingsActivity extends AppCompatActivity {
 
         String currentModel = settingsManager.getSelectedModel();
         // Model will be set in spinner after it's populated
+    }
+
+    private void refreshLogs() {
+        String logs = LogManager.toText();
+        if (logs.isEmpty()) {
+            logs = "(no logs yet)";
+        }
+        logsText.setText(logs);
     }
 
     private void setupModelSpinner() {
